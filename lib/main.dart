@@ -9,77 +9,125 @@ void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => ConversationProvider(),
-      child: MyApp(),
+      child: MaterialApp(
+          title: 'Virtual Agent Chat App',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.grey,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          home: const MyApp()),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
 
-  // create theme
-  final ThemeData theme = ThemeData(
-    primarySwatch: Colors.grey,
-    visualDensity: VisualDensity.adaptivePlatformDensity,
-  );
+  @override
+  _MyAppState createState() => _MyAppState();
+}
 
-  MyApp({super.key});
-
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     //var _scaffoldKey = GlobalKey<ScaffoldState>();
 
-    return MaterialApp(
-      title: 'Virtual Agent Chat App',
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      home: Scaffold(
-        //key: _scaffoldKey,
-        appBar: AppBar(
-          title: Text(
-            Provider.of<ConversationProvider>(context, listen: true)
-                .currentConversationTitle,
-            style: const TextStyle(
-              fontSize: 20.0, // change font size
-              color: Colors.black, // change font color
-              fontFamily: 'din-regular', // change font family
-            ),
+    return Scaffold(
+      //key: _scaffoldKey,
+      appBar: AppBar(
+        title: Text(
+          Provider.of<ConversationProvider>(context, listen: true)
+              .currentConversationTitle,
+          style: const TextStyle(
+            fontSize: 20.0, // change font size
+            color: Colors.black, // change font color
+            fontFamily: 'din-regular', // change font family
           ),
-          leading: Builder(
-            builder: (BuildContext context) {
-              return IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              );
+        ),
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            );
+          },
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0, // remove box shadow
+        toolbarHeight: 50,
+        actions: const [
+          CustomPopupMenu(),
+        ],
+      ),
+      drawer: const MyDrawer(),
+      body: const Center(
+        child: ChatPage(),
+      ),
+      floatingActionButton: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              onPressed: () {
+                _showDialog(context);
+              },
+              tooltip: 'Create Persona',
+              elevation: 12,
+              child: const Icon(Icons.person),
+            ),
+            const SizedBox(
+              height: 80,
+            )
+          ]),
+    );
+  }
+
+  void _showDialog(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String newName = '';
+        return AlertDialog(
+          title: const Text('Rename Persona'),
+          content: TextField(
+            // display the current name of the conversation
+            decoration: InputDecoration(
+              hintText:
+                  Provider.of<ConversationProvider>(context, listen: false)
+                      .currentConversation
+                      .title,
+            ),
+            onChanged: (value) {
+              newName = value;
             },
           ),
-          backgroundColor: Colors.white,
-          elevation: 0, // remove box shadow
-          toolbarHeight: 50,
-          actions: const [
-            CustomPopupMenu(),
-          ],
-        ),
-        drawer: const MyDrawer(),
-        body: const Center(
-          child: ChatPage(),
-        ),
-        floatingActionButton: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FloatingActionButton(
-                onPressed: () {},
-                tooltip: 'Create Persona',
-                elevation: 12,
-                child: const Icon(Icons.person),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text(
+                'Rename',
+                style: TextStyle(
+                  color: Color(0xff55bb8e),
+                ),
               ),
-              const SizedBox(
-                height: 80,
-              )
-            ]),
-      ),
+              onPressed: () {
+                // Call renameConversation method here with the new name
+                Provider.of<ConversationProvider>(context, listen: false)
+                    .renameConversation(newName);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
